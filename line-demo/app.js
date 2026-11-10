@@ -40,8 +40,13 @@ window.addEventListener('storage',e=>{if(e.key===key){stopAuto();read();render()
 (()=>{
  for(const tools of document.querySelectorAll('.view-tools')){
   const panel=tools.closest('.panel'),pan=panel.querySelector('.screen-pan'),surface=pan.querySelector('.legacy-surface');let scale=1;
-  function zoom(value){scale=Math.max(.3,Math.min(2,value));surface.style.zoom=scale;tools.querySelector('output').textContent=Math.round(scale*100)+'%';}
+  function zoom(value){scale=Math.max(.15,Math.min(3,value));surface.style.zoom=scale;tools.querySelector('output').textContent=Math.round(scale*100)+'%';}
   tools.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.pan)pan.scrollBy({left:Number(b.dataset.pan)*pan.clientWidth*.65,behavior:'smooth'});if(b.dataset.zoom)zoom(scale+Number(b.dataset.zoom)*.1);if(b.hasAttribute('data-fit')){zoom(Math.min((pan.clientWidth-3)/parseFloat(getComputedStyle(surface).width),(pan.clientHeight-3)/(surface.scrollHeight||580)));pan.scrollTo(0,0);}if(b.hasAttribute('data-expand')){const w=document.querySelector('#workspace'),id=tools.dataset.for;if(w.dataset.expanded===id){delete w.dataset.expanded;b.textContent='크게 보기';}else{w.dataset.expanded=id;b.textContent='반반 보기';}}});
+  let pinch=null;
+  const distance=t=>Math.hypot(t[0].clientX-t[1].clientX,t[0].clientY-t[1].clientY);
+  pan.addEventListener('touchstart',e=>{if(e.touches.length!==2)return;e.preventDefault();const rect=pan.getBoundingClientRect(),x=(e.touches[0].clientX+e.touches[1].clientX)/2-rect.left,y=(e.touches[0].clientY+e.touches[1].clientY)/2-rect.top;pinch={distance:distance(e.touches),scale,x:(pan.scrollLeft+x)/scale,y:(pan.scrollTop+y)/scale};},{passive:false});
+  pan.addEventListener('touchmove',e=>{if(!pinch||e.touches.length!==2)return;e.preventDefault();const rect=pan.getBoundingClientRect(),x=(e.touches[0].clientX+e.touches[1].clientX)/2-rect.left,y=(e.touches[0].clientY+e.touches[1].clientY)/2-rect.top;zoom(pinch.scale*distance(e.touches)/Math.max(1,pinch.distance));pan.scrollLeft=pinch.x*scale-x;pan.scrollTop=pinch.y*scale-y;},{passive:false});
+  pan.addEventListener('touchend',()=>{pinch=null;});pan.addEventListener('touchcancel',()=>{pinch=null;});
   pan.addEventListener('wheel',e=>{if(e.ctrlKey){e.preventDefault();zoom(scale+(e.deltaY<0?.1:-.1));}else if(e.shiftKey){e.preventDefault();pan.scrollLeft+=e.deltaY;}},{passive:false});
  }
 })();
