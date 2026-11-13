@@ -36,11 +36,19 @@ const rows=[...document.querySelectorAll('.progress-table tbody tr')].slice(0,3)
 $('#clock').textContent=new Date().toLocaleString('ko-KR',{hour12:false});$('#date').textContent=new Date().toLocaleDateString('ko-KR',{month:'2-digit',day:'2-digit'});
 }
 function mockNext(){if(!state.running||state.repair==='fixing')return;if(state.mockStep>=6)return;const product=Math.floor(state.mockStep/2)+1,kind=state.mockStep%2===0?'label':'input';if(kind==='label')label();else inputSignal();let row=state.mockRecords.find(x=>x.product===product);if(!row){row={product,label:null,input:null};state.mockRecords.push(row);}row[kind]=Date.now();state.mockStep++;log(product+'번 제품 · '+(kind==='label'?'라벨 발행':'투입일시')+' 모의 데이터 반영');save();}
-function stopAuto(){tasks.forEach(clearTimeout);tasks=[];auto=false;$('#auto').textContent='▶ 자동 시연 · 38초';}
+function stopAuto(){tasks.forEach(clearTimeout);tasks=[];auto=false;$('#auto').textContent='▶ 자동 시연 · 40초';}
 function reset(){stopAuto();state=empty();save();}
 $('#work').addEventListener('click',()=>{stopAuto();work();});$('#repair').addEventListener('click',()=>{stopAuto();repair();});$('#label').addEventListener('click',()=>{stopAuto();label();});$('#input-signal').addEventListener('click',()=>{stopAuto();inputSignal();});$('#mock-next').addEventListener('click',()=>{stopAuto();mockNext();});$('#sms-close').addEventListener('click',()=>$('#sms-dialog').close());$('#sms-dialog').addEventListener('click',e=>{if(e.target===$('#sms-dialog'))$('#sms-dialog').close();});$('#reset').addEventListener('click',reset);
 $('#mode').addEventListener('change',e=>{stopAuto();const mode=e.target.value;state=empty();state.mode=mode;log('알림 기준 변경 · 새 작업을 시작해주세요.');save();});
-$('#auto').addEventListener('click',()=>{if(auto){stopAuto();log('자동 시연 정지 · 버튼으로 직접 조작할 수 있습니다.');save();return;}reset();auto=true;$('#auto').textContent='■ 자동 시연 정지';work();for(const [ms,fn]of [[2000,()=>{label();inputSignal();}],[26000,repair],[30000,repair],[32000,()=>{label();inputSignal();}],[36000,work],[38000,()=>{stopAuto();log('자동 시연 완료 · 다시 시작하거나 직접 조작해보세요.');save();}]])tasks.push(setTimeout(fn,ms));});
+$('#auto').addEventListener('click',()=>{if(auto){stopAuto();log('자동 시연 정지 · 버튼으로 직접 조작할 수 있습니다.');save();return;}reset();auto=true;$('#auto').textContent='■ 자동 시연 정지';work();for(const [ms,fn]of [
+[10500,()=>{inputSignal();state.mockRecords=[{product:1,input:state.lastInput,label:null}];state.mockStep=1;log('투입일시 반영 · 1초 뒤 라벨 발행');save();}],
+[11500,()=>{label();state.mockRecords[0].label=state.lastLabel;state.mockStep=2;log('라벨 발행 · 두 타이머 1초 차이');save();}],
+[32500,()=>{$('#sms-dialog').close();log('자동 호출 문자 시연 확인 · 팝업 닫기');save();}],
+[34500,repair],
+[37500,repair],
+[40000,()=>{stopAuto();log('자동 시연 완료 · 두 타이머 초기화 후 정상 진행');save();}]
+])tasks.push(setTimeout(fn,ms));});
+
 window.addEventListener('storage',e=>{if(e.key===key){stopAuto();read();render();}});render();setInterval(tick,100);
 })();
 // Independent PC screen viewports: scroll, zoom, fit and expand do not affect machine state.
