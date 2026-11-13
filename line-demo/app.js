@@ -36,7 +36,7 @@ const rows=[...document.querySelectorAll('.progress-table tbody tr')].slice(0,3)
 $('#clock').textContent=new Date().toLocaleString('ko-KR',{hour12:false});$('#date').textContent=new Date().toLocaleDateString('ko-KR',{month:'2-digit',day:'2-digit'});
 }
 function mockNext(){if(!state.running||state.repair==='fixing')return;if(state.mockStep>=6)return;const product=Math.floor(state.mockStep/2)+1,kind=state.mockStep%2===0?'label':'input';if(kind==='label')label();else inputSignal();let row=state.mockRecords.find(x=>x.product===product);if(!row){row={product,label:null,input:null};state.mockRecords.push(row);}row[kind]=Date.now();state.mockStep++;log(product+'번 제품 · '+(kind==='label'?'라벨 발행':'투입일시')+' 모의 데이터 반영');save();}
-function stopAuto(){tasks.forEach(clearTimeout);tasks=[];auto=false;$('#auto').textContent='▶ 자동 시연 · 40초';}
+function stopAuto(){tasks.forEach(clearTimeout);tasks=[];auto=false;$('#auto').textContent='▶ 자동 시연 · 50초';}
 function reset(){stopAuto();state=empty();save();}
 $('#work').addEventListener('click',()=>{stopAuto();work();});$('#repair').addEventListener('click',()=>{stopAuto();repair();});$('#label').addEventListener('click',()=>{stopAuto();label();});$('#input-signal').addEventListener('click',()=>{stopAuto();inputSignal();});$('#mock-next').addEventListener('click',()=>{stopAuto();mockNext();});$('#sms-close').addEventListener('click',()=>$('#sms-dialog').close());$('#sms-dialog').addEventListener('click',e=>{if(e.target===$('#sms-dialog'))$('#sms-dialog').close();});$('#reset').addEventListener('click',reset);
 $('#mode').addEventListener('change',e=>{stopAuto();const mode=e.target.value;state=empty();state.mode=mode;log('알림 기준 변경 · 새 작업을 시작해주세요.');save();});
@@ -46,7 +46,12 @@ $('#auto').addEventListener('click',()=>{if(auto){stopAuto();log('자동 시연 
 [32500,()=>{$('#sms-dialog').close();log('자동 호출 문자 시연 확인 · 팝업 닫기');save();}],
 [34500,repair],
 [37500,repair],
-[40000,()=>{stopAuto();log('자동 시연 완료 · 두 타이머 초기화 후 정상 진행');save();}]
+[39500,repair],
+[41500,()=>{$('#sms-dialog').close();log('직접 호출 문자 시연 확인 · 팝업 닫기');save();}],
+[43500,repair],
+[45500,repair],
+[47500,work],
+[50000,()=>{stopAuto();log('자동·직접 호출 시연 완료 · 작업 완료');save();}]
 ])tasks.push(setTimeout(fn,ms));});
 
 window.addEventListener('storage',e=>{if(e.key===key){stopAuto();read();render();}});render();setInterval(tick,100);
